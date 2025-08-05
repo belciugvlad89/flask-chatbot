@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 # Inițializează clientul OpenAI cu cheia din variabila de mediu
-client = OpenAI(api_key="skproj-0fVlFGaBkPrbIZ_D6Ek3YBGDYO7r2nRF8yDTvb6MOFmRczPqa4fYZRY83GOcmFw1vXMIBgw8qeT3BlbkFJfxZe_h50WK2j8g869LBG4aL81ytn3q7Lw5MUyYH69mC63SgmyoTwGfgPWRPyJN-CGXk6Es4g0A")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 system_message = {
     "role": "system",
@@ -36,4 +36,5 @@ def chat():
     return jsonify({"answer": answer})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
