@@ -1,52 +1,28 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <title>Chatbot Învățare Maghiară</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; }
-        #chatbox { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; }
-        .user { color: blue; margin: 10px 0; }
-        .bot { color: green; margin: 10px 0; }
-        #inputForm { margin-top: 20px; }
-    </style>
+    <meta charset="UTF-8">
+    <title>Extractor Facturi SPV</title>
 </head>
 <body>
-    <h1>Chatbot Învățare Maghiară</h1>
-    <div id="chatbox"></div>
-
-    <form id="inputForm">
-        <input type="text" id="message" autocomplete="off" placeholder="Scrie ceva..." style="width:80%" required />
+    <h1>Încarcă Factura PDF</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" accept="application/pdf" required>
         <button type="submit">Trimite</button>
     </form>
+    <pre id="output"></pre>
 
     <script>
-        const form = document.getElementById('inputForm');
-        const chatbox = document.getElementById('chatbox');
-
-        form.addEventListener('submit', async (e) => {
+        document.getElementById("uploadForm").addEventListener("submit", async function(e) {
             e.preventDefault();
-            const message = document.getElementById('message').value;
-            appendMessage('user', message);
-            document.getElementById('message').value = '';
-
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message})
+            const formData = new FormData(this);
+            const res = await fetch("/upload", {
+                method: "POST",
+                body: formData
             });
-
-            const data = await response.json();
-            appendMessage('bot', data.answer);
+            const data = await res.json();
+            document.getElementById("output").textContent = JSON.stringify(data, null, 2);
         });
-
-        function appendMessage(sender, text) {
-            const div = document.createElement('div');
-            div.className = sender;
-            div.textContent = (sender === 'user' ? 'Tu: ' : 'Asistent: ') + text;
-            chatbox.appendChild(div);
-            chatbox.scrollTop = chatbox.scrollHeight;
-        }
     </script>
 </body>
 </html>

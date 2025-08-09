@@ -1,40 +1,49 @@
 from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
+import pdfplumber
 import os
 
 app = Flask(__name__)
 
-# Inițializează clientul OpenAI cu cheia din variabila de mediu
+# Folosește cheia API din variabilă de mediu
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-system_message = {
-    "role": "system",
-    "content": "Ești un asistent prietenos care ajută utilizatorul să învețe limba maghiară. Explică simplu, oferă exemple, corectează greșelile și propune exerciții scurte."
-}
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
-@app.route("/chat", methods=["POST"])
-def chat():
-    user_message = request.json.get("message")
+@app.route("/upload", methods=["POST"])
+def upload():
+    file = request.files["file"]
+    if not file or not file.filename.endswith(".pdf"):
+        return jsonify({"error": "Te rog încarcă un fișier PDF valid."}), 400
 
-    messages = [
-        system_message,
-        {"role": "user", "content": user_message}
-    ]
+    # Citește textul din PDF
+    with pdfplumber.open(file) as pdf:
+        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+
+    # Prompt pentru GPT
+    prompt = f"""
+    Din următorul text al facturii, extrage următoarele informații și returnează în format JSON:
+    - Denumire Furnizor
+    - Denumire Material
+    - Cantitate
+    - Pret unitar
+    - Pret total
+
+    Text factură:
+    {text}
+    """
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=messages,
-        max_tokens=400,
-        temperature=0.7,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+        max_tokens=500
     )
 
     answer = response.choices[0].message.content
-    return jsonify({"answer": answer})
+    return jsonify({"result": answer})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=True)
