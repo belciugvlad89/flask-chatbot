@@ -10,7 +10,23 @@
         <input type="file" name="file" accept="application/pdf" required>
         <button type="submit">Trimite</button>
     </form>
+
+    <!-- JSON brut -->
     <pre id="output"></pre>
+
+    <!-- Tabel pentru afișare frumoasă -->
+    <table border="1" id="resultTable" style="margin-top:20px; border-collapse:collapse; display:none;">
+      <thead>
+        <tr>
+          <th>Furnizor</th>
+          <th>Material</th>
+          <th>Cantitate</th>
+          <th>Preț Unitar</th>
+          <th>Preț Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
     <script>
         document.getElementById("uploadForm").addEventListener("submit", async function(e) {
@@ -21,7 +37,32 @@
                 body: formData
             });
             const data = await res.json();
+
+            // afișăm JSON brut
             document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+
+            try {
+                // convertim răspunsul GPT în JSON real
+                let facturi = JSON.parse(data.result).factura;
+
+                let tableBody = document.querySelector("#resultTable tbody");
+                tableBody.innerHTML = "";
+
+                facturi.forEach(item => {
+                    let row = `<tr>
+                        <td>${item.Denumire_Furnizor}</td>
+                        <td>${item.Denumire_Material}</td>
+                        <td>${item.Cantitate}</td>
+                        <td>${item.Pret_unitar}</td>
+                        <td>${item.Pret_total}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+
+                document.getElementById("resultTable").style.display = "table";
+            } catch (err) {
+                console.error("Eroare parsare JSON:", err);
+            }
         });
     </script>
 </body>
