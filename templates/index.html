@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Extractor Facturi SPV</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
 </head>
 <body>
     <h1>Încarcă Factura PDF</h1>
@@ -11,57 +16,47 @@
         <button type="submit">Trimite</button>
     </form>
 
-    <!-- JSON brut -->
-    <pre id="output"></pre>
-
-    <!-- Tabel pentru afișare frumoasă -->
-    <table border="1" id="resultTable" style="margin-top:20px; border-collapse:collapse; display:none;">
-      <thead>
-        <tr>
-          <th>Furnizor</th>
-          <th>Material</th>
-          <th>Cantitate</th>
-          <th>Preț Unitar</th>
-          <th>Preț Total</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div id="output"></div>
 
     <script>
         document.getElementById("uploadForm").addEventListener("submit", async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
+
             const res = await fetch("/upload", {
                 method: "POST",
                 body: formData
             });
+
             const data = await res.json();
 
-            // afișăm JSON brut
-            document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+            if (data.error) {
+                document.getElementById("output").textContent = data.error;
+                return;
+            }
 
             try {
-                // convertim răspunsul GPT în JSON real
-                let facturi = JSON.parse(data.result).factura;
+                // Scoate ```json și ``` din răspuns
+                let jsonString = data.result.replace(/```json|```/g, '').trim();
+                let factura = JSON.parse(jsonString);
 
-                let tableBody = document.querySelector("#resultTable tbody");
-                tableBody.innerHTML = "";
-
-                facturi.forEach(item => {
-                    let row = `<tr>
+                // Construiește tabelul
+                let table = '<table><tr><th>Furnizor</th><th>Material</th><th>Cantitate</th><th>Pret unit</th><th>Pret total</th></tr>';
+                factura.factura.forEach(item => {
+                    table += `<tr>
                         <td>${item.Denumire_Furnizor}</td>
                         <td>${item.Denumire_Material}</td>
                         <td>${item.Cantitate}</td>
                         <td>${item.Pret_unitar}</td>
                         <td>${item.Pret_total}</td>
                     </tr>`;
-                    tableBody.innerHTML += row;
                 });
+                table += '</table>';
 
-                document.getElementById("resultTable").style.display = "table";
+                document.getElementById("output").innerHTML = table;
             } catch (err) {
-                console.error("Eroare parsare JSON:", err);
+                document.getElementById("output").textContent = "Eroare la procesarea JSON-ului.";
+                console.error(err);
             }
         });
     </script>
