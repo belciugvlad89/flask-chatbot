@@ -29,18 +29,17 @@
             });
 
             const data = await res.json();
+            const outputEl = document.getElementById("output");
 
             if (data.error) {
-                document.getElementById("output").textContent = data.error;
+                outputEl.textContent = data.error;
                 return;
             }
 
             try {
-                // Scoate ```json și ``` din răspuns
-                let jsonString = data.result.replace(/```json|```/g, '').trim();
-                let factura = JSON.parse(jsonString);
+                // Aici acum e direct JSON valid
+                let factura = JSON.parse(data.result);
 
-                // Construiește tabelul
                 let table = '<table><tr><th>Furnizor</th><th>Material</th><th>Cantitate</th><th>Pret unit</th><th>Pret total</th></tr>';
                 factura.factura.forEach(item => {
                     table += `<tr>
@@ -53,9 +52,9 @@
                 });
                 table += '</table>';
 
-                document.getElementById("output").innerHTML = table;
+                outputEl.innerHTML = table;
             } catch (err) {
-                document.getElementById("output").textContent = "Eroare la procesarea JSON-ului.";
+                outputEl.textContent = "Eroare la procesarea JSON-ului.";
                 console.error(err);
             }
         });
